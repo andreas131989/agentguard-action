@@ -6,7 +6,6 @@ inputs:
   comment-threshold:
     description: "Risk level required before AgentGuard comments: low, medium, high, or critical. Overrides .agentguard.yml when provided."
     required: false
-    default: "high"
 
   config-path:
     description: "Path to the optional AgentGuard config file."
@@ -16,7 +15,6 @@ inputs:
   mode:
     description: "When AgentGuard should run: ai-only, labeled, or all-prs. Overrides .agentguard.yml when provided."
     required: false
-    default: "ai-only"
 
   github-token:
     description: "GitHub token used by the action."
