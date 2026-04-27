@@ -1,0 +1,24 @@
+{
+  "authorLogin": "codex-agent",
+  "authorType": "bot",
+  "branchName": "codex/update-deploy-and-schema",
+  "title": "AI generated deployment and schema update",
+  "body": "Generated deployment and schema update.",
+  "labels": [],
+  "changedFiles": [
+    {
+      "filename": "migrations/001_update_users.sql",
+      "status": "added",
+      "additions": 24,
+      "deletions": 0,
+      "changes": 24
+    },
+    {
+      "filename": ".github/workflows/deploy.yml",
+      "status": "modified",
+      "additions": 14,
+      "deletions": 4,
+      "changes": 18
+    }
+  ]
+}

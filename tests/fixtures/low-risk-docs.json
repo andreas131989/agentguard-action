@@ -1,0 +1,17 @@
+{
+  "authorLogin": "github-copilot[bot]",
+  "authorType": "bot",
+  "branchName": "docs/update-readme",
+  "title": "docs: update README",
+  "body": "Generated documentation update.",
+  "labels": [],
+  "changedFiles": [
+    {
+      "filename": "docs/README.md",
+      "status": "modified",
+      "additions": 5,
+      "deletions": 2,
+      "changes": 7
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "authorLogin": "codex-agent",
+  "authorType": "bot",
+  "branchName": "codex/auth-schema-update",
+  "title": "feat: update auth schema",
+  "body": "",
+  "labels": [],
+  "changedFiles": [
+    {
+      "filename": "auth/session.ts",
+      "status": "modified",
+      "additions": 80,
+      "deletions": 12,
+      "changes": 92
+    },
+    {
+      "filename": "package-lock.json",
+      "status": "modified",
+      "additions": 120,
+      "deletions": 80,
+      "changes": 200
+    },
+    {
+      "filename": "migrations/20250101010101_add_login_events.sql",
+      "status": "added",
+      "additions": 45,
+      "deletions": 0,
+      "changes": 45
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+# AgentGuard example config
+#
+# AgentGuard is a lightweight GitHub Action that flags risky AI/bot-created PRs.
+# It uses deterministic file-pattern rules.
+# It does not call AI models, send telemetry, use a backend, or store source code.
+
+enabled: true
+
+# Supported modes:
+# - ai-only: analyze PRs that appear AI/bot-authored
+# - labeled: analyze PRs with configured AI/bot labels
+# - all-prs: analyze every PR
+mode: ai-only
+
+# Supported thresholds:
+# - low
+# - medium
+# - high
+# - critical
+#
+# Default: high
+# Low/medium risk PRs write workflow summary only by default.
+# High/critical risk PRs create or update one PR comment by default.
+comment_threshold: high
+
+# Additional AI/bot author logins.
+# These are merged with AgentGuard defaults.
+agent_authors:
+  - "github-copilot[bot]"
+  - "cursor-agent"
+  - "devin-ai"
+  - "codex-agent"
+  - "claude-code"
+
+# Additional sensitive paths.
+# These are merged with AgentGuard defaults.
+critical_paths:
+  - "auth/**"
+  - "billing/**"
+  - "payments/**"
+  - "infra/**"
+  - "migrations/**"
+  - ".github/workflows/**"
+
+# Additional ignored paths.
+# These are merged with AgentGuard defaults.
+ignore_paths:
+  - "docs/**"
+  - "*.md"
+  - "generated/**"
+  - "dist/**"

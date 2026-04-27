@@ -1,0 +1,17 @@
+{
+  "authorLogin": "cursor-agent",
+  "authorType": "bot",
+  "branchName": "cursor/update-container",
+  "title": "chore: update Docker build",
+  "body": "Generated CI/CD update.",
+  "labels": [],
+  "changedFiles": [
+    {
+      "filename": "Dockerfile",
+      "status": "modified",
+      "additions": 12,
+      "deletions": 5,
+      "changes": 17
+    }
+  ]
+}

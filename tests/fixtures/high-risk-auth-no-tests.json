@@ -1,0 +1,17 @@
+{
+  "authorLogin": "github-copilot[bot]",
+  "authorType": "bot",
+  "branchName": "copilot/update-auth-flow",
+  "title": "feat: update auth flow",
+  "body": "",
+  "labels": [],
+  "changedFiles": [
+    {
+      "filename": "auth/session.ts",
+      "status": "modified",
+      "additions": 72,
+      "deletions": 20,
+      "changes": 92
+    }
+  ]
+}

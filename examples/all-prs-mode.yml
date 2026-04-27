@@ -1,0 +1,23 @@
+name: AgentGuard
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  agentguard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # all-prs mode analyzes every PR.
+      # This is useful for evaluation, but can be noisier than ai-only mode.
+      - uses: andreas131989/agentguard-action@v0.1.0
+        with:
+          mode: all-prs
+          comment-threshold: high

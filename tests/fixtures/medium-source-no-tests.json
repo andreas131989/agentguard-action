@@ -1,0 +1,17 @@
+{
+  "authorLogin": "cursor-agent",
+  "authorType": "bot",
+  "branchName": "cursor/refactor-parser",
+  "title": "refactor: simplify parser",
+  "body": "",
+  "labels": [],
+  "changedFiles": [
+    {
+      "filename": "src/parser.ts",
+      "status": "modified",
+      "additions": 40,
+      "deletions": 18,
+      "changes": 58
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+name: "AgentGuard"
+description: "Flags risky AI/bot-created pull requests that may need extra human attention."
+author: "AgentGuard"
+
+inputs:
+  comment-threshold:
+    description: "Risk level required before AgentGuard comments: low, medium, high, or critical. Overrides .agentguard.yml when provided."
+    required: false
+    default: "high"
+
+  config-path:
+    description: "Path to the optional AgentGuard config file."
+    required: false
+    default: ".agentguard.yml"
+
+  mode:
+    description: "When AgentGuard should run: ai-only, labeled, or all-prs. Overrides .agentguard.yml when provided."
+    required: false
+    default: "ai-only"
+
+  github-token:
+    description: "GitHub token used by the action."
+    required: false
+    default: "${{ github.token }}"
+
+  license-key:
+    description: "Optional AgentGuard license key for future private/commercial repository usage."
+    required: false
+
+runs:
+  using: "node20"
+  main: "dist/index.cjs"
+
+branding:
+  icon: "shield"
+  color: "blue"

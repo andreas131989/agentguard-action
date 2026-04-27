@@ -1,0 +1,17 @@
+{
+  "authorLogin": "octocat",
+  "authorType": "user",
+  "branchName": "feature/manual-change",
+  "title": "feat: update profile page",
+  "body": "",
+  "labels": [],
+  "changedFiles": [
+    {
+      "filename": "src/profile.ts",
+      "status": "modified",
+      "additions": 20,
+      "deletions": 3,
+      "changes": 23
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "authorLogin": "github-copilot[bot]",
+  "authorType": "bot",
+  "branchName": "copilot/update-dependencies",
+  "title": "chore: update dependencies",
+  "body": "Generated dependency update.",
+  "labels": [],
+  "changedFiles": [
+    {
+      "filename": "package.json",
+      "status": "modified",
+      "additions": 8,
+      "deletions": 4,
+      "changes": 12
+    },
+    {
+      "filename": "package-lock.json",
+      "status": "modified",
+      "additions": 120,
+      "deletions": 95,
+      "changes": 215
+    }
+  ]
+}
