@@ -111,6 +111,20 @@ export function renderWorkflowSummary(input: WorkflowSummaryInput): string {
   return lines.join("\n");
 }
 
+export function renderLicenseRequiredSummary(reason: string, purchaseUrl: string): string {
+  return [
+    "## AgentGuard Risk Summary",
+    "",
+    "AgentGuard did not run: a valid license key is required.",
+    "",
+    `**Reason:** ${reason}`,
+    "",
+    `Get a license at ${purchaseUrl}`,
+    "",
+    "No PR comment was posted."
+  ].join("\n");
+}
+
 export async function writeWorkflowSummary(markdown: string): Promise<void> {
   await core.summary.addRaw(markdown).write();
 }

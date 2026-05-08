@@ -22,7 +22,7 @@ inputs:
     default: "${{ github.token }}"
 
   license-key:
-    description: "Optional AgentGuard license key for future private/commercial repository usage."
+    description: "AgentGuard license key. Required for private repositories once commercial licensing is active. Get one at https://agentguard.dev/pricing"
     required: false
 
 runs:
