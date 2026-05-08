@@ -9,6 +9,7 @@ import { applyActionInputConfigOverrides } from "./config/normalize-config.js";
 import { fetchChangedFiles } from "./files/changed-files.js";
 import { renderRiskComment } from "./render/risk-comment.js";
 import {
+  renderLicenseRequiredSummary,
   renderSkippedWorkflowSummary,
   renderWarningWorkflowSummary,
   renderWorkflowSummary,
@@ -16,6 +17,8 @@ import {
 } from "./render/workflow-summary.js";
 import { evaluateRisk } from "./risk/engine.js";
 import { shouldAnalyzeInput } from "./risk/rules/ai-author.js";
+import { LICENSE_PURCHASE_URL } from "./license/constants.js";
+import { validateLicenseKey } from "./license/validate.js";
 import { withRetry } from "./utils/retry.js";
 
 function errorMessage(error: unknown): string {
@@ -32,6 +35,24 @@ async function writeWarningSummarySafely(reason: string): Promise<void> {
 
 async function runAgentGuard(): Promise<void> {
   const inputs = readActionInputs();
+
+  const licenseResult = validateLicenseKey(inputs.licenseKey);
+
+  if (!licenseResult.valid) {
+    core.info(`AgentGuard: ${licenseResult.reason}`);
+    core.info(`Get a license at ${LICENSE_PURCHASE_URL}`);
+    try {
+      await writeWorkflowSummary(
+        renderLicenseRequiredSummary(licenseResult.reason, LICENSE_PURCHASE_URL)
+      );
+    } catch (summaryError: unknown) {
+      core.warning(`Unable to write AgentGuard workflow summary: ${errorMessage(summaryError)}`);
+    }
+    return;
+  }
+
+  core.info(`AgentGuard: license valid — ${licenseResult.payload.tier} tier, customer ${licenseResult.payload.sub}.`);
+
   const pullRequest = getPullRequestRuntimeContext(github.context);
 
   if (!pullRequest) {
