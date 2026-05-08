@@ -79,7 +79,7 @@ export function isAiAuthored(input: RiskInput): boolean {
   return (
     input.authorType === "bot" ||
     authorLogin.endsWith("[bot]") ||
-    authorLogin.includes("bot") ||
+    tokens(authorLogin).has("bot") ||
     isConfiguredAgentAuthor(input.authorLogin, input.config) ||
     includesAnyMarker(input.authorLogin) ||
     hasAiLabel(input.labels, input.config) ||

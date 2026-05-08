@@ -16,6 +16,7 @@ import {
 } from "./render/workflow-summary.js";
 import { evaluateRisk } from "./risk/engine.js";
 import { shouldAnalyzeInput } from "./risk/rules/ai-author.js";
+import { withRetry } from "./utils/retry.js";
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Unknown error";
@@ -92,7 +93,7 @@ async function runAgentGuard(): Promise<void> {
   let changedFiles;
 
   try {
-    changedFiles = await fetchChangedFiles(client, pullRequest);
+    changedFiles = await withRetry(() => fetchChangedFiles(client, pullRequest));
   } catch (error: unknown) {
     const reason = `Unable to fetch pull request changed files from GitHub: ${errorMessage(error)}`;
     core.warning(reason);
@@ -138,13 +139,15 @@ async function runAgentGuard(): Promise<void> {
   }
 
   try {
-    const commentResult = await upsertRiskComment(client, {
-      owner: pullRequest.owner,
-      repo: pullRequest.repo,
-      issueNumber: pullRequest.pullNumber,
-      body: renderRiskComment(result),
-      shouldComment: result.shouldComment
-    });
+    const commentResult = await withRetry(() =>
+      upsertRiskComment(client, {
+        owner: pullRequest.owner,
+        repo: pullRequest.repo,
+        issueNumber: pullRequest.pullNumber,
+        body: renderRiskComment(result),
+        shouldComment: result.shouldComment
+      })
+    );
 
     if (commentResult.action === "created") {
       core.info(
