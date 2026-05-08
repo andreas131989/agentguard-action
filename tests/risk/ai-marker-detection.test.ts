@@ -58,6 +58,17 @@ describe("AI marker detection", () => {
     expect(isAiAuthored(input({ authorLogin: "against-change" }))).toBe(false);
   });
 
+  it("avoids bot substring false positives in author login", () => {
+    expect(isAiAuthored(input({ authorLogin: "robot" }))).toBe(false);
+    expect(isAiAuthored(input({ authorLogin: "jacobot" }))).toBe(false);
+    expect(isAiAuthored(input({ authorLogin: "robotics-admin" }))).toBe(false);
+  });
+
+  it("still detects legitimate bot logins by token", () => {
+    expect(isAiAuthored(input({ authorLogin: "deploy-bot" }))).toBe(true);
+    expect(isAiAuthored(input({ authorLogin: "automation-bot" }))).toBe(true);
+  });
+
   it("treats user-agent as an intentional standalone agent marker", () => {
     expect(
       isAiAuthored(

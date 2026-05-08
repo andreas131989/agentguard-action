@@ -80,7 +80,18 @@ export function evaluateRisk(input: RiskInput): RiskResult {
   const cappedRuleSignals = CAPPED_FILE_RULES.map((rule) => rule(cappedRuleInput));
   const largePrSignal = largePrRule(largePrInput);
 
-  const signals = [...cappedRuleSignals, largePrSignal].filter(
+  const fileCap = config.largePr.maxChangedFilesAnalyzed;
+  const fileCappedSignal: RiskSignal | null =
+    analyzableFiles.length > fileCap
+      ? {
+          id: "file_cap_truncated",
+          label: `Analysis capped at ${fileCap} files`,
+          severity: "low",
+          description: `${analyzableFiles.length} analyzable files exceeded the ${fileCap}-file cap. ${analyzableFiles.length - fileCap} file(s) were not checked by most rules.`
+        }
+      : null;
+
+  const signals = [...cappedRuleSignals, largePrSignal, fileCappedSignal].filter(
     (signal): signal is RiskSignal => signal !== null
   );
   const riskScore = scoreSignals(signals);

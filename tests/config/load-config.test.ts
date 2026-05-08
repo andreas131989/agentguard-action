@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { loadAgentGuardConfig, parseSimpleYamlConfig } from "../../src/config/load-config.js";
+import { validateAgentGuardConfig } from "../../src/config/schema.js";
 import { DEFAULT_CONFIG } from "../../src/risk/defaults.js";
 
 let tempDirectories: string[] = [];
@@ -128,13 +129,15 @@ describe("AgentGuard config loading", () => {
     );
   });
 
-  it("rejects unsupported nested YAML objects", () => {
-    expect(() =>
-      parseSimpleYamlConfig(`
-        enabled: true
-        nested:
-          child: value
-      `)
-    ).toThrow("Nested YAML objects are not supported by AgentGuard MVP config.");
+  it("rejects nested YAML objects via schema validation", () => {
+    const parsed = parseSimpleYamlConfig(`
+      enabled: true
+      nested:
+        child: value
+    `);
+
+    expect(() => validateAgentGuardConfig(parsed)).toThrow(
+      'Unsupported AgentGuard config key "nested"'
+    );
   });
 });

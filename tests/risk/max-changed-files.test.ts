@@ -27,6 +27,9 @@ describe("maxChangedFilesAnalyzed enforcement", () => {
 
     expect(hasSignal(result, "large_pr")).toBe(true);
     expect(findSignal(result, "large_pr")?.description).toContain("3 files changed");
+
+    expect(hasSignal(result, "file_cap_truncated")).toBe(true);
+    expect(findSignal(result, "file_cap_truncated")?.description).toContain("2 file(s) were not checked");
   });
 
   it("does not allow files after the analysis cap to create critical secret signals", () => {
@@ -42,6 +45,7 @@ describe("maxChangedFilesAnalyzed enforcement", () => {
 
     expect(hasSignal(result, "secret_file")).toBe(false);
     expect(hasSignal(result, "large_pr")).toBe(true);
+    expect(hasSignal(result, "file_cap_truncated")).toBe(true);
     expect(result.riskLevel).toBe("high");
   });
 });
