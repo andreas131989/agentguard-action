@@ -24131,6 +24131,7 @@ async function upsertRiskComment(client, input) {
 // src/config/load-config.ts
 var import_promises = require("fs/promises");
 var import_node_path = __toESM(require("path"), 1);
+var import_js_yaml = __toESM(require("js-yaml"), 1);
 
 // src/risk/defaults.ts
 var DEFAULT_CONFIG = {
@@ -24525,119 +24526,15 @@ function validateAgentGuardConfig(raw) {
 function errorMessage(error) {
   return error instanceof Error ? error.message : "Unknown error";
 }
-function stripInlineComment(line) {
-  let inSingleQuote = false;
-  let inDoubleQuote = false;
-  for (let index = 0; index < line.length; index += 1) {
-    const character = line[index];
-    if (character === "'" && !inDoubleQuote) {
-      inSingleQuote = !inSingleQuote;
-    }
-    if (character === '"' && !inSingleQuote) {
-      inDoubleQuote = !inDoubleQuote;
-    }
-    if (character === "#" && !inSingleQuote && !inDoubleQuote) {
-      return line.slice(0, index);
-    }
-  }
-  return line;
-}
-function unquote(value) {
-  const trimmed = value.trim();
-  if (trimmed.startsWith('"') && trimmed.endsWith('"') || trimmed.startsWith("'") && trimmed.endsWith("'")) {
-    return trimmed.slice(1, -1);
-  }
-  return trimmed;
-}
-function splitInlineArray(value) {
-  const inner = value.trim().slice(1, -1).trim();
-  if (inner.length === 0) {
-    return [];
-  }
-  const items = [];
-  let current = "";
-  let inSingleQuote = false;
-  let inDoubleQuote = false;
-  for (const character of inner) {
-    if (character === "'" && !inDoubleQuote) {
-      inSingleQuote = !inSingleQuote;
-      current += character;
-      continue;
-    }
-    if (character === '"' && !inSingleQuote) {
-      inDoubleQuote = !inDoubleQuote;
-      current += character;
-      continue;
-    }
-    if (character === "," && !inSingleQuote && !inDoubleQuote) {
-      items.push(unquote(current));
-      current = "";
-      continue;
-    }
-    current += character;
-  }
-  if (current.trim().length > 0) {
-    items.push(unquote(current));
-  }
-  return items;
-}
-function parseScalar(value) {
-  const trimmed = value.trim();
-  if (trimmed === "true") {
-    return true;
-  }
-  if (trimmed === "false") {
-    return false;
-  }
-  if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
-    return splitInlineArray(trimmed);
-  }
-  return unquote(trimmed);
-}
 function parseSimpleYamlConfig(content) {
-  const rawLines = content.split(/\r?\n/);
-  const meaningfulLines = rawLines.map((rawLine) => stripInlineComment(rawLine).trimEnd()).filter((line) => line.trim().length > 0);
-  const baseIndent = meaningfulLines.filter((line) => !line.trimStart().startsWith("- ")).map((line) => line.match(/^\s*/)?.[0].length ?? 0).reduce(
-    (minimum, indent) => minimum === null ? indent : Math.min(minimum, indent),
-    null
-  ) ?? 0;
-  const result = {};
-  let currentListKey = null;
-  for (const rawLine of meaningfulLines) {
-    const line = rawLine.slice(baseIndent);
-    const listItemMatch = line.match(/^\s{2}-\s*(.*)$/);
-    if (listItemMatch) {
-      if (!currentListKey) {
-        throw new Error("List item found without a preceding key.");
-      }
-      const existingValue = result[currentListKey];
-      if (!Array.isArray(existingValue)) {
-        throw new Error(`"${currentListKey}" cannot mix scalar and list values.`);
-      }
-      existingValue.push(parseScalar(listItemMatch[1] ?? ""));
-      continue;
-    }
-    if (/^\s/.test(line)) {
-      throw new Error("Nested YAML objects are not supported by AgentGuard MVP config.");
-    }
-    const keyValueMatch = line.match(/^([A-Za-z_][A-Za-z0-9_-]*):(?:\s*(.*))?$/);
-    if (!keyValueMatch) {
-      throw new Error(`Unsupported YAML line: ${line.trim()}`);
-    }
-    const key = keyValueMatch[1] ?? "";
-    const value = keyValueMatch[2] ?? "";
-    if (Object.prototype.hasOwnProperty.call(result, key)) {
-      throw new Error(`Duplicate config key "${key}".`);
-    }
-    if (value.trim().length === 0) {
-      result[key] = [];
-      currentListKey = key;
-      continue;
-    }
-    result[key] = parseScalar(value);
-    currentListKey = null;
+  const parsed = import_js_yaml.default.load(content);
+  if (parsed === null || parsed === void 0) {
+    return {};
   }
-  return result;
+  if (typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("Config must be a YAML object.");
+  }
+  return parsed;
 }
 function resolveConfigPath(configPath, cwd) {
   const normalizedPath = configPath.trim() || ".agentguard.yml";
@@ -24953,6 +24850,19 @@ function renderWorkflowSummary(input) {
   }
   return lines.join("\n");
 }
+function renderLicenseRequiredSummary(reason, purchaseUrl) {
+  return [
+    "## AgentGuard Risk Summary",
+    "",
+    "AgentGuard did not run: a valid license key is required.",
+    "",
+    `**Reason:** ${reason}`,
+    "",
+    `Get a license at ${purchaseUrl}`,
+    "",
+    "No PR comment was posted."
+  ].join("\n");
+}
 async function writeWorkflowSummary(markdown) {
   await core2.summary.addRaw(markdown).write();
 }
@@ -25004,7 +24914,7 @@ function isConfiguredAgentAuthor(authorLogin, config) {
 }
 function isAiAuthored(input) {
   const authorLogin = normalize(input.authorLogin);
-  return input.authorType === "bot" || authorLogin.endsWith("[bot]") || authorLogin.includes("bot") || isConfiguredAgentAuthor(input.authorLogin, input.config) || includesAnyMarker(input.authorLogin) || hasAiLabel(input.labels, input.config) || includesAnyMarker(input.branchName) || includesAnyMarker(input.title) || includesAnyMarker(input.body);
+  return input.authorType === "bot" || authorLogin.endsWith("[bot]") || tokens(authorLogin).has("bot") || isConfiguredAgentAuthor(input.authorLogin, input.config) || includesAnyMarker(input.authorLogin) || hasAiLabel(input.labels, input.config) || includesAnyMarker(input.branchName) || includesAnyMarker(input.title) || includesAnyMarker(input.body);
 }
 function shouldAnalyzeInput(input) {
   if (!input.config.enabled) {
@@ -25417,7 +25327,14 @@ function evaluateRisk(input) {
   };
   const cappedRuleSignals = CAPPED_FILE_RULES.map((rule) => rule(cappedRuleInput));
   const largePrSignal = largePrRule(largePrInput);
-  const signals = [...cappedRuleSignals, largePrSignal].filter(
+  const fileCap = config.largePr.maxChangedFilesAnalyzed;
+  const fileCappedSignal = analyzableFiles.length > fileCap ? {
+    id: "file_cap_truncated",
+    label: `Analysis capped at ${fileCap} files`,
+    severity: "low",
+    description: `${analyzableFiles.length} analyzable files exceeded the ${fileCap}-file cap. ${analyzableFiles.length - fileCap} file(s) were not checked by most rules.`
+  } : null;
+  const signals = [...cappedRuleSignals, largePrSignal, fileCappedSignal].filter(
     (signal) => signal !== null
   );
   const riskScore = scoreSignals(signals);
@@ -25429,6 +25346,70 @@ function evaluateRisk(input) {
     recommendations: recommendationsForSignals(signals),
     shouldComment: isAtOrAboveRiskLevel(riskLevel, config.commentThreshold)
   };
+}
+
+// src/license/constants.ts
+var LICENSE_KEY_PREFIX = "AG-v1.";
+var AGENTGUARD_LICENSE_PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
+MCowBQYDK2VwAyEAyG6mY47XtAmDZGr0jN7kueXE+uj2jbUk/jFEtdZjVhg=
+-----END PUBLIC KEY-----`;
+var LICENSE_PURCHASE_URL = "https://agentguard.dev/pricing";
+var LICENSE_ENFORCEMENT_ENABLED = false;
+
+// src/license/validate.ts
+var import_node_crypto = require("crypto");
+function validateLicenseKey(key, publicKeyPem = AGENTGUARD_LICENSE_PUBLIC_KEY) {
+  const trimmed = key.trim();
+  if (trimmed.length === 0) {
+    return { valid: false, reason: "No license key provided." };
+  }
+  if (!trimmed.startsWith(LICENSE_KEY_PREFIX)) {
+    return { valid: false, reason: "Invalid license key format." };
+  }
+  const withoutPrefix = trimmed.slice(LICENSE_KEY_PREFIX.length);
+  const dotIndex = withoutPrefix.indexOf(".");
+  if (dotIndex === -1) {
+    return { valid: false, reason: "Invalid license key format." };
+  }
+  const payloadB64 = withoutPrefix.slice(0, dotIndex);
+  const sigB64 = withoutPrefix.slice(dotIndex + 1);
+  let payload;
+  try {
+    const json = Buffer.from(payloadB64, "base64url").toString("utf8");
+    payload = JSON.parse(json);
+  } catch {
+    return { valid: false, reason: "Invalid license key: malformed payload." };
+  }
+  const nowSec = Math.floor(Date.now() / 1e3);
+  if (typeof payload.exp === "number" && payload.exp < nowSec) {
+    return { valid: false, reason: "License key has expired." };
+  }
+  try {
+    const publicKey = (0, import_node_crypto.createPublicKey)({ key: publicKeyPem, format: "pem", type: "spki" });
+    const data = Buffer.from(payloadB64, "utf8");
+    const sig = Buffer.from(sigB64, "base64url");
+    if (!(0, import_node_crypto.verify)(null, data, publicKey, sig)) {
+      return { valid: false, reason: "Invalid license key: signature verification failed." };
+    }
+  } catch {
+    return { valid: false, reason: "Invalid license key: could not verify signature." };
+  }
+  return { valid: true, payload };
+}
+
+// src/utils/retry.ts
+async function withRetry(operation, maxAttempts = 3, baseDelayMs = 500) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      if (attempt >= maxAttempts) {
+        throw error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, baseDelayMs * attempt));
+    }
+  }
+  throw new Error("withRetry: exhausted attempts without result.");
 }
 
 // src/index.ts
@@ -25444,6 +25425,23 @@ async function writeWarningSummarySafely(reason) {
 }
 async function runAgentGuard() {
   const inputs = readActionInputs();
+  const isPrivateRepo = github2.context.payload.repository?.private === true;
+  if (LICENSE_ENFORCEMENT_ENABLED && isPrivateRepo) {
+    const licenseResult = validateLicenseKey(inputs.licenseKey);
+    if (!licenseResult.valid) {
+      core3.info(`AgentGuard: ${licenseResult.reason}`);
+      core3.info(`Private repositories require a license. Get one at ${LICENSE_PURCHASE_URL}`);
+      try {
+        await writeWorkflowSummary(
+          renderLicenseRequiredSummary(licenseResult.reason, LICENSE_PURCHASE_URL)
+        );
+      } catch (summaryError) {
+        core3.warning(`Unable to write AgentGuard workflow summary: ${errorMessage2(summaryError)}`);
+      }
+      return;
+    }
+    core3.info(`AgentGuard: license valid \u2014 ${licenseResult.payload.tier} tier, customer ${licenseResult.payload.sub}.`);
+  }
   const pullRequest = getPullRequestRuntimeContext(github2.context);
   if (!pullRequest) {
     const reason = "AgentGuard currently runs only on pull_request events.";
@@ -25492,7 +25490,7 @@ async function runAgentGuard() {
   const client = createGitHubClient(inputs.githubToken);
   let changedFiles;
   try {
-    changedFiles = await fetchChangedFiles(client, pullRequest);
+    changedFiles = await withRetry(() => fetchChangedFiles(client, pullRequest));
   } catch (error) {
     const reason = `Unable to fetch pull request changed files from GitHub: ${errorMessage2(error)}`;
     core3.warning(reason);
@@ -25531,13 +25529,15 @@ async function runAgentGuard() {
     return;
   }
   try {
-    const commentResult = await upsertRiskComment(client, {
-      owner: pullRequest.owner,
-      repo: pullRequest.repo,
-      issueNumber: pullRequest.pullNumber,
-      body: renderRiskComment(result),
-      shouldComment: result.shouldComment
-    });
+    const commentResult = await withRetry(
+      () => upsertRiskComment(client, {
+        owner: pullRequest.owner,
+        repo: pullRequest.repo,
+        issueNumber: pullRequest.pullNumber,
+        body: renderRiskComment(result),
+        shouldComment: result.shouldComment
+      })
+    );
     if (commentResult.action === "created") {
       core3.info(
         `Created AgentGuard PR comment${commentResult.commentId ? ` #${commentResult.commentId}` : ""}.`
