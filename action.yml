@@ -22,8 +22,8 @@ inputs:
     default: "${{ github.token }}"
 
   license-key:
-    description: "AgentGuard license key. Required to run the action. Get one at https://agentguard.dev/pricing"
-    required: true
+    description: "AgentGuard license key. Required for private repositories once commercial licensing is active. Get one at https://agentguard.dev/pricing"
+    required: false
 
 runs:
   using: "node20"

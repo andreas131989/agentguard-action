@@ -17,7 +17,7 @@ import {
 } from "./render/workflow-summary.js";
 import { evaluateRisk } from "./risk/engine.js";
 import { shouldAnalyzeInput } from "./risk/rules/ai-author.js";
-import { LICENSE_PURCHASE_URL } from "./license/constants.js";
+import { LICENSE_ENFORCEMENT_ENABLED, LICENSE_PURCHASE_URL } from "./license/constants.js";
 import { validateLicenseKey } from "./license/validate.js";
 import { withRetry } from "./utils/retry.js";
 
@@ -36,22 +36,26 @@ async function writeWarningSummarySafely(reason: string): Promise<void> {
 async function runAgentGuard(): Promise<void> {
   const inputs = readActionInputs();
 
-  const licenseResult = validateLicenseKey(inputs.licenseKey);
+  const isPrivateRepo = github.context.payload.repository?.private === true;
 
-  if (!licenseResult.valid) {
-    core.info(`AgentGuard: ${licenseResult.reason}`);
-    core.info(`Get a license at ${LICENSE_PURCHASE_URL}`);
-    try {
-      await writeWorkflowSummary(
-        renderLicenseRequiredSummary(licenseResult.reason, LICENSE_PURCHASE_URL)
-      );
-    } catch (summaryError: unknown) {
-      core.warning(`Unable to write AgentGuard workflow summary: ${errorMessage(summaryError)}`);
+  if (LICENSE_ENFORCEMENT_ENABLED && isPrivateRepo) {
+    const licenseResult = validateLicenseKey(inputs.licenseKey);
+
+    if (!licenseResult.valid) {
+      core.info(`AgentGuard: ${licenseResult.reason}`);
+      core.info(`Private repositories require a license. Get one at ${LICENSE_PURCHASE_URL}`);
+      try {
+        await writeWorkflowSummary(
+          renderLicenseRequiredSummary(licenseResult.reason, LICENSE_PURCHASE_URL)
+        );
+      } catch (summaryError: unknown) {
+        core.warning(`Unable to write AgentGuard workflow summary: ${errorMessage(summaryError)}`);
+      }
+      return;
     }
-    return;
-  }
 
-  core.info(`AgentGuard: license valid — ${licenseResult.payload.tier} tier, customer ${licenseResult.payload.sub}.`);
+    core.info(`AgentGuard: license valid — ${licenseResult.payload.tier} tier, customer ${licenseResult.payload.sub}.`);
+  }
 
   const pullRequest = getPullRequestRuntimeContext(github.context);
 
