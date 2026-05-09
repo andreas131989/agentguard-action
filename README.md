@@ -1,5 +1,7 @@
 # AgentGuard
 
+[![GitHub Marketplace](https://img.shields.io/badge/Marketplace-AgentGuard-blue?logo=github)](https://github.com/marketplace/actions/agentguard-ai-pr-risk-assessment)
+
 Let agents code. Know which PRs need human attention.
 
 > **Public beta:** AgentGuard is currently in public beta. Defaults, docs, and APIs may change before v1.0.
