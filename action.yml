@@ -1,4 +1,4 @@
-name: "AgentGuard"
+name: "AgentGuard - AI PR Risk Assessment"
 description: "Flags risky AI/bot-created pull requests that may need extra human attention."
 author: "AgentGuard"
 
