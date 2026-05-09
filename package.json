@@ -1,6 +1,6 @@
 {
   "name": "agentguard-action",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "A lightweight GitHub Action that flags risky AI/bot-created pull requests for extra human attention.",
